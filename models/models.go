@@ -20,7 +20,14 @@ type Account struct {
 }
 
 type UserResponse struct {
+	ID       uint
+	Username string
+	Email    string
+	Accounts []AccountResponse
 }
 
 type AccountResponse struct {
+	ID      uint
+	Name    string
+	Balance uint
 }
