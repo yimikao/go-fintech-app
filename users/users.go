@@ -31,7 +31,7 @@ func Login(username string, pwd string) map[string]interface{} {
 	hp.HandleErr(err)
 
 	res := map[string]interface{}{
-		"message": "user loggedin",
+		"message": "login successful",
 		"token":   t,
 		"data":    uRes,
 	}

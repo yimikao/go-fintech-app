@@ -1,8 +1,9 @@
 package main
 
-import "go-fintech-app/migrations"
+import "go-fintech-app/api"
 
 func main() {
-	migrations.Migrate()
+	// migrations.Migrate
+	api.StartServer()
 
 }
