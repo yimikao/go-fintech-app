@@ -31,3 +31,8 @@ type AccountResponse struct {
 	Name    string
 	Balance uint
 }
+
+type Validation struct {
+	Value string
+	Valid string
+}
