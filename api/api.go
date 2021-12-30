@@ -60,9 +60,45 @@ func login(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
+func register(w http.ResponseWriter, r *http.Request) {
+
+	body, err := ioutil.ReadAll(r.Body)
+	hp.HandleErr(err)
+
+	var rr RegisterRequest
+	err = json.Unmarshal(body, &rr)
+
+	isValid := hp.ValidateReq([]md.Validation{
+		{Value: rr.Username, Valid: "username"},
+		{Value: rr.Email, Valid: "email"},
+		{Value: rr.Password, Valid: "password"},
+	})
+
+	if !isValid {
+		json.NewEncoder(w).Encode(ErrResponse{
+			Message: "Wrong details",
+		})
+	}
+
+	res := users.Register(&users.RegisterParams{
+		Username: rr.Username,
+		Email:    rr.Email,
+		Password: rr.Password,
+	})
+
+	if res["message"] != "registration successful" {
+		json.NewEncoder(w).Encode(ErrResponse{
+			Message: "Wrong registration details",
+		})
+	}
+
+	json.NewEncoder(w).Encode(res)
+}
+
 func StartServer() {
 	r := mux.NewRouter()
 	r.HandleFunc("/login", login).Methods("POST")
+	r.HandleFunc("/register", register).Methods("POST")
 
 	fmt.Println("Server running....")
 	log.Fatal(http.ListenAndServe(":8000", r))
