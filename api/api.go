@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	hp "go-fintech-app/helpers"
+	md "go-fintech-app/models"
 	"go-fintech-app/users"
 	"io/ioutil"
 	"log"
@@ -14,6 +15,12 @@ import (
 
 type LoginRequest struct {
 	Username string
+	Password string
+}
+
+type RegisterRequest struct {
+	Username string
+	Email    string
 	Password string
 }
 
@@ -29,7 +36,21 @@ func login(w http.ResponseWriter, r *http.Request) {
 	err = json.Unmarshal(body, &r)
 	hp.HandleErr(err)
 
-	res := users.Login(lr.Username, lr.Password)
+	isValid := hp.ValidateReq([]md.Validation{
+		{Value: lr.Username, Valid: "username"},
+		{Value: lr.Password, Valid: "password"},
+	})
+
+	if !isValid {
+		json.NewEncoder(w).Encode(ErrResponse{
+			Message: "Wrong details",
+		})
+	}
+
+	res := users.Login(&users.LoginParams{
+		Username: lr.Username,
+		Password: lr.Password,
+	})
 
 	if res["message"] != "login successful" {
 		json.NewEncoder(w).Encode(ErrResponse{
