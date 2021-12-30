@@ -28,12 +28,18 @@ type ErrResponse struct {
 	Message string
 }
 
-func login(w http.ResponseWriter, r *http.Request) {
-	body, err := ioutil.ReadAll(r.Body)
+func readBody(r *http.Request) (b []byte) {
+	b, err := ioutil.ReadAll(r.Body)
 	hp.HandleErr(err)
 
+	return
+}
+
+func login(w http.ResponseWriter, r *http.Request) {
+	body := readBody(r)
+
 	var lr LoginRequest
-	err = json.Unmarshal(body, &r)
+	err := json.Unmarshal(body, &r)
 	hp.HandleErr(err)
 
 	isValid := hp.ValidateReq([]md.Validation{
@@ -62,11 +68,11 @@ func login(w http.ResponseWriter, r *http.Request) {
 
 func register(w http.ResponseWriter, r *http.Request) {
 
-	body, err := ioutil.ReadAll(r.Body)
-	hp.HandleErr(err)
+	body := readBody(r)
 
 	var rr RegisterRequest
-	err = json.Unmarshal(body, &rr)
+	err := json.Unmarshal(body, &rr)
+	hp.HandleErr(err)
 
 	isValid := hp.ValidateReq([]md.Validation{
 		{Value: rr.Username, Valid: "username"},
