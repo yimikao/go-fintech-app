@@ -1,6 +1,8 @@
 package helpers
 
 import (
+	md "go-fintech-app/models"
+	"regexp"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -46,4 +48,27 @@ func SignToken(claim uint) (token string, err error) {
 	token, err = jwtToken.SignedString([]byte("Token"))
 
 	return
+}
+
+func ValidateReq(v []md.Validation) bool {
+	usernameVdn := regexp.MustCompile("^([A-Za-z0-9]{5,})+$")
+	emailVdn := regexp.MustCompile("^[A-Za-z0-9]+[@]+[A-Za-z0-9]+[.]+[A-Za-z]+$")
+
+	for _, vdn := range v {
+		switch vdn.Valid {
+		case "username":
+			if !usernameVdn.MatchString(vdn.Value) {
+				return false
+			}
+		case "email":
+			if !emailVdn.MatchString(vdn.Value) {
+				return false
+			}
+		case "password":
+			if len(vdn.Value) < 5 {
+				return false
+			}
+		}
+	}
+	return true
 }
