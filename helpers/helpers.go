@@ -1,8 +1,13 @@
 package helpers
 
 import (
+	"encoding/json"
 	md "go-fintech-app/models"
+	"log"
+	"net/http"
 	"regexp"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/dgrijalva/jwt-go"
@@ -14,6 +19,20 @@ func HandleErr(err error) {
 	if err != nil {
 		panic(err.Error())
 	}
+}
+
+func PanicHandler(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		defer func() {
+			err := recover()
+			if err != nil {
+				log.Println(err)
+
+				json.NewEncoder(w).Encode(md.ErrResponse{Message: "Internal server error"})
+			}
+		}()
+		next.ServeHTTP(w, r)
+	})
 }
 
 func ConnectDB() *gorm.DB {
@@ -48,6 +67,29 @@ func SignToken(claim uint) (token string, err error) {
 	token, err = jwtToken.SignedString([]byte("Token"))
 
 	return
+}
+
+func ValidateToken(id string, jwtToken string) bool {
+	cleanJWT := strings.Replace(jwtToken, "Bearer ", "", -1)
+	tokenData := jwt.MapClaims{}
+
+	token, err := jwt.ParseWithClaims(cleanJWT, tokenData, func(t *jwt.Token) (interface{}, error) {
+		return []byte("Token"), nil
+	})
+	HandleErr(err)
+
+	userId, _ := strconv.ParseFloat(id, 8)
+
+	if token.Valid && tokenData["user_id"] == userId {
+		return true
+	} else {
+		return false
+	}
+
+}
+
+func WithToken(response map[string]interface{}, token string) {
+	response["token"] = token
 }
 
 func ValidateReq(v []md.Validation) bool {

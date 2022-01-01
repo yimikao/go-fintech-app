@@ -91,3 +91,38 @@ func Login(p *LoginParams) map[string]interface{} {
 	}
 	return res
 }
+
+/*
+If we would like to do any activity related to the user, the application needs to know if we are the owner of the account.
+We can verify that by validating the JWT token.
+*/
+func GetUser(id string, jwt string) map[string]interface{} {
+	isValid := hp.ValidateToken(id, jwt)
+	if !isValid {
+		return map[string]interface{}{"message": "invalid token"}
+	}
+	db := hp.ConnectDB()
+	defer db.Close()
+
+	u := &md.User{}
+
+	if db.Where("id = ? ", id).First(&u).RecordNotFound() {
+		return map[string]interface{}{"message": "User not found"}
+	}
+	accs := []md.AccountResponse{}
+	db.Table("accounts").Select("id, name, balance").Where("user_id =  ?", u.ID).Scan(&accs)
+
+	uRes := md.UserResponse{
+		ID:       u.ID,
+		Username: u.Username,
+		Email:    u.Email,
+		Accounts: accs,
+	}
+
+	res := map[string]interface{}{
+		"message": "user fetched successfully",
+		"data":    uRes,
+	}
+
+	return res
+}

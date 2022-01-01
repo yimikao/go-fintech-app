@@ -24,10 +24,6 @@ type RegisterRequest struct {
 	Password string
 }
 
-type ErrResponse struct {
-	Message string
-}
-
 func readBody(r *http.Request) (b []byte) {
 	b, err := ioutil.ReadAll(r.Body)
 	hp.HandleErr(err)
@@ -48,7 +44,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if !isValid {
-		json.NewEncoder(w).Encode(ErrResponse{
+		json.NewEncoder(w).Encode(md.ErrResponse{
 			Message: "Wrong details",
 		})
 	}
@@ -59,7 +55,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if res["message"] != "login successful" {
-		json.NewEncoder(w).Encode(ErrResponse{
+		json.NewEncoder(w).Encode(md.ErrResponse{
 			Message: "Wrong password or username",
 		})
 	}
@@ -81,7 +77,7 @@ func register(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if !isValid {
-		json.NewEncoder(w).Encode(ErrResponse{
+		json.NewEncoder(w).Encode(md.ErrResponse{
 			Message: "Wrong details",
 		})
 	}
@@ -93,7 +89,7 @@ func register(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if res["message"] != "registration successful" {
-		json.NewEncoder(w).Encode(ErrResponse{
+		json.NewEncoder(w).Encode(md.ErrResponse{
 			Message: "Wrong registration details",
 		})
 	}
@@ -101,10 +97,22 @@ func register(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(res)
 }
 
+func getUser(w http.ResponseWriter, r *http.Request) {
+	vars := mux.Vars(r)
+	userId := vars["id"]
+	auth := r.Header.Get("Authorization")
+
+	user := users.GetUser(userId, auth)
+
+	json.NewEncoder(w).Encode(user)
+}
+
 func StartServer() {
 	r := mux.NewRouter()
+	r.Use(hp.PanicHandler)
 	r.HandleFunc("/login", login).Methods("POST")
 	r.HandleFunc("/register", register).Methods("POST")
+	r.HandleFunc("/user/{id}", getUser).Methods("GET")
 
 	fmt.Println("Server running....")
 	log.Fatal(http.ListenAndServe(":8000", r))
